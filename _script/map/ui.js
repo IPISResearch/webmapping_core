@@ -38,6 +38,30 @@ var UI = function(){
         menuContainer.innerHTML = Template.get("loadererror");
     };
 
+	me.showLogin = function(){
+		menuContainer = menuContainer || document.getElementById("menu");
+		menuContainer.className = "preloader big";
+		menuContainer.innerHTML = Template.get("login");
+		document.body.classList.add("loading");
+	};
+
+	me.doLogin = function(){
+		// not hacker-safe but as the password is semi-public it will do.
+		var passElm = document.getElementById("password");
+		var pass = passElm.value;
+		pass = pass.split(".").join("");
+		pass = pass.split("/").join("");
+		pass = pass.split("\\").join("");
+		FetchService.json("data/" + pass + ".json",function(result){
+			if (result && result.result && result.result === "ok"){
+				createCookie("pass" + Config.apiScope,true,1000);
+				Main.initApp();
+			}else{
+				passElm.value = "";
+			}
+		})
+	};
+
     me.showDisclaimer = function(firstUse){
 
         if (firstUse){

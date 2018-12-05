@@ -4,15 +4,30 @@ var Main = function(){
 
     me.init = function(){
         Template.load(Config.templateURL+'?v' + version, function(templates) {
-            if (Config.showDisclaimerOnFirstUse) UI.showDisclaimer(true);
 
-            if (Config.preLoad){
-                UI.showLoader();
-                Config.preLoad();
-            }else{
-                EventBus.trigger(EVENT.preloadDone);
+			if (Config.usePass){
+				var hasPass = readCookie("pass" + Config.apiScope);
+				if (hasPass){
+					me.initApp();
+				}else{
+					UI.showLogin();
+				}
+			}else{
+				me.initApp();
             }
+
         });
+    };
+
+    me.initApp = function(){
+		if (Config.showDisclaimerOnFirstUse) UI.showDisclaimer(true);
+
+		if (Config.preLoad){
+			UI.showLoader();
+			Config.preLoad();
+		}else{
+			EventBus.trigger(EVENT.preloadDone);
+		}
     };
 
     document.addEventListener('DOMContentLoaded', function() {
