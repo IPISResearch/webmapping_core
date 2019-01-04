@@ -306,6 +306,10 @@ var MapService = (function() {
         });
     }
 
+      if (layer.onLoaded){
+          layer.onLoaded();
+      }
+
     map.on("render", function() {
       if(map.loaded()) {
         if (!mapLoaded){
