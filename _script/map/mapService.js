@@ -106,6 +106,8 @@ var MapService = (function() {
       return;
     }
 
+    if (typeof sourceOrigin === "string") sourceOrigin = sourceOrigin.replace("%apiScope%",Config.apiScope);
+
     var sourceId = layer.sourceId || sourceOrigin.replace(/\W/g, '');
 
     var source = mapSources[sourceId];

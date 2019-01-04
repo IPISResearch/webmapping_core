@@ -98,3 +98,12 @@ Array.prototype.groupBy = function(prop) {
         return groups
     }, {})
 };
+
+// DOM helpers
+
+function div(className,innerHTML){
+    var d = document.createElement("div");
+    if (className) d.className = className;
+    if (innerHTML) d.innerHTML = innerHTML;
+    return d;
+}
