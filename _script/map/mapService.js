@@ -69,6 +69,10 @@ var MapService = (function() {
                 }
               });
 
+            }else{
+                if (layer.onLoaded){
+                    layer.onLoaded();
+                }
             }
 
           }else{
