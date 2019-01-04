@@ -523,6 +523,161 @@ var MapService = (function() {
     updateHash("layer Changed");
   });
 
+    // utility to get unique properties in source
+    me.distinct = function(source,property){
+        var list = map.querySourceFeatures(source);
+        var result = [];
+        var lookup = {};
+        list.forEach(function(item){
+            var value = item.properties[property];
+            if (value && !lookup[value]){
+                result.push(value);
+                lookup[value] = true;
+            }
+        });
+
+        result.sort();
+        return result;
+    };
+
+    me.getFilterItems = function(source,property,mapping){
+        var filterList = me.distinct(source,property);
+        filterList.sort();
+        var keyMapping = !!mapping;
+        if (!keyMapping) mapping = palette('tol-rainbow', filterList.length);
+
+        var filterItems = [];
+        filterList.forEach(function(item, index){
+            var label = item;
+            var color = "grey";
+            if (keyMapping){
+                if (mapping[item]){
+                    color =  mapping[item].color || mapping[item];
+                    label = mapping[item].label || label
+                }
+            }else{
+                color = "#" + (mapping[index] || "CCCCCC");
+            }
+            filterItems.push({label: label, value: item,  color:  color});
+        });
+
+        return filterItems;
+    };
+
+    // filters on 1 property - supports sublayers
+    me.genericFilter = function(elm){
+        var items = elm.filterItems;
+        var hasFilter = false;
+        var values = [];
+        items.forEach(function(item){
+            if (!item.checked){
+                hasFilter = true;
+            }else{
+                values.push(item.value);
+            }
+        });
+
+        var layerId = elm.layer.id;
+
+        if (hasFilter){
+            map.setFilter(layerId,["in",(elm.filterProperty || elm.id)].concat(values));
+
+            if (elm.layer.subLayers){
+                elm.layer.subLayers.forEach(function(sublayer,index){
+                    if (!sublayer.isHover){
+                        map.setFilter(layerId + index,["in",(elm.filterProperty || elm.id)].concat(values));
+                    }
+                });
+            }
+        }else{
+            map.setFilter(layerId);
+            if (elm.layer.subLayers){
+                elm.layer.subLayers.forEach(function(sublayer,index){
+                    if (!sublayer.isHover){
+                        map.setFilter(layerId + index);
+                    }
+                });
+            }
+        }
+
+        if (elm.layer.placeholder){
+            layerId = elm.layer.id.split("_")[0];
+            if (hasFilter){
+                map.setFilter(layerId,["in",(elm.filterProperty || elm.id)].concat(values));
+            }else{
+                map.setFilter(layerId);
+            }
+        }
+    };
+
+
+    me.genericMultiFilter = function (elm) {
+
+
+        elm.layer.filterFunctionLookup = elm.layer.filterFunctionLookup || {};
+
+        var values = [];
+        elm.filterItems.forEach(function (item) {
+            if (item.checked) values.push(item.value);
+        });
+
+        if (values.length === elm.filterItems.length) {
+            // all items checked - ignore filter
+            elm.layer.filterFunctionLookup[elm.id] = undefined;
+        } else {
+            if (elm.array) {
+                elm.layer.filterFunctionLookup[elm.id] = function (item) {
+                    var value = item.properties[elm.filterProperty];
+                    if (value && value.length) {
+                        return value.some(function (v) {
+                            return values.includes(v);
+                        });
+                    }
+                    return false;
+                };
+            } else {
+                elm.layer.filterFunctionLookup[elm.id] = function (item) {
+                    return values.includes(item.properties[elm.filterProperty]);
+                };
+            }
+        }
+
+
+        me.filterLayerGenericMulti(elm);
+
+    };
+
+    me.filterLayerGenericMulti = function (elm) {
+        var filteredIds = [];
+        var filtered = [];
+        var filterFunctions = [];
+        elm.layer.filterFunctionLookup = elm.layer.filterFunctionLookup || {};
+
+        for (var key in elm.layer.filterFunctionLookup) {
+            if (elm.layer.filterFunctionLookup.hasOwnProperty(key) && elm.layer.filterFunctionLookup[key]) {
+                filterFunctions.push(elm.layer.filterFunctionLookup[key]);
+            }
+        }
+
+        map.querySourceFeatures(elm.layer.id).forEach(function (feature) {
+            var passed = true;
+            var filterCount = 0;
+            var filterMax = filterFunctions.length;
+            while (passed && filterCount < filterMax) {
+                passed = filterFunctions[filterCount](feature);
+                filterCount++;
+            }
+
+
+            if (passed) {
+                filtered.push(feature);
+                filteredIds.push(feature.properties.id);
+            }
+        });
+
+        map.setFilter(elm.layer.id, ['in', 'id'].concat(filteredIds));
+    };
+
 
   return me;
 
