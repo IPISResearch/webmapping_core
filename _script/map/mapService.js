@@ -301,6 +301,13 @@ var MapService = (function() {
             if (e.features.length>1) {
               // TODO: Spiderify ?
             }
+
+            // prevent a click to propagate to all layers
+            if (e && e.originalEvent){
+                if(e.originalEvent.cancelBubble) return;
+                e.originalEvent.cancelBubble = true;
+            }
+
             popupHover.remove();
             layer.onClick(e.features[0],e.lngLat);
         });
