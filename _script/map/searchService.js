@@ -79,7 +79,7 @@ var SearchService = (function() {
           closeButton: false,
         });
 
-        var timer
+        var timer;
 
 		searchResultElement.onclick = function(e){
 		    var target = e.target;
@@ -89,6 +89,7 @@ var SearchService = (function() {
     					var location = co.split(',');
     					var point = [location[1],location[0]];
     					map.flyTo({center: point,zoom:11});
+                        EventBus.trigger(EVENT.mapNavigate);
               popupHover.setLngLat(point)
               .setHTML(target.innerHTML)
               .addTo(map);
