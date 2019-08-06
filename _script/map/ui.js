@@ -308,6 +308,78 @@ var UI = function(){
         }
     };
 
+	me.appendLayerFilters = function(layer,layerContainer){
+
+
+		if (layerContainer.querySelector(".appended")){
+			// filters aleady present - this happens on base layer switch
+			return;
+		}
+
+		if (layer.filters) layer.filters.forEach(function(filter){
+
+			var filterContainer = div("filter");
+			var filterLabel  = div("filterlabel appended",filter.label);
+
+			filterContainer.appendChild(filterLabel);
+			var itemContainer = div("items");
+
+			var items = filter.items;
+			if (typeof items === "function") items = filter.items();
+			filter.layer = layer;
+
+			var filterItems = [];
+			var max = filter.maxVisibleItems;
+			var hasOverflow = false;
+			items.forEach(function(item,index){
+
+				var filterItem = item;
+				if (typeof item === "string" || typeof item === "number"){
+					filterItem = {label: item}
+				}
+				filterItem.color = filterItem.color || "silver";
+				if (typeof filterItem.value === "undefined") filterItem.value = filterItem.label;
+
+				var icon = '<i style="background-color: '+filterItem.color+'"></i>';
+				var elm = div("filteritem",icon +  (filterItem.label || filterItem.value) );
+
+				elm.onclick = function(){me.updateFilter(filter,filterItem)};
+
+				if (max && index>=max){
+					elm.classList.add("overflow");
+					hasOverflow = true;
+				}
+
+				itemContainer.appendChild(elm);
+
+				filterItem.elm = elm;
+				filterItem.checked = true;
+				filterItems.push(filterItem);
+			});
+			filter.filterItems = filterItems;
+
+			if (hasOverflow){
+				var toggleMore = div("moreless","Plus ...");
+				toggleMore.onclick = function(){
+					if (itemContainer.classList.contains("expanded")){
+						itemContainer.classList.remove("expanded");
+						toggleMore.innerHTML = "Plus ...";
+						toggleMore.classList.remove("less");
+					}else{
+						itemContainer.classList.add("expanded");
+						toggleMore.innerHTML = "Moins ...";
+						toggleMore.classList.add("less");
+					}
+				};
+				itemContainer.appendChild(toggleMore);
+			}
+
+
+			filterContainer.appendChild(itemContainer);
+			layerContainer.appendChild(filterContainer);
+		});
+	};
+
     me.popup = function(data,template,point,flyTo){
 
         var html = data;
