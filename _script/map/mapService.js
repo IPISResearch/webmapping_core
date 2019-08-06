@@ -441,10 +441,10 @@ var MapService = (function() {
         if (layer.active) baseLayer = layer.index;
       });
 
-      var yearClamp = Data.getYearClamp();
+      /*var yearClamp = Data.getYearClamp();
       if (yearClamp.start){
         filterIds.push("1." + (yearClamp.start-2000) + "." + (yearClamp.end-2000));
-      }
+      }*/
 
 
       for (var key in Config.layers){
