@@ -40,18 +40,18 @@ var MapService = (function () {
 
 		map.on('style.load', function (e) {
 			for (var key in Config.layers) {
-			    
-			    
+
+
 				if (Config.layers.hasOwnProperty(key)) {
 					var layer = Config.layers[key];
 					layer.display = layer.display || {visible: true};
-					
+
 					if (typeof layer.display.visible === "undefined") layer.display.visible = true;
 
 					if (layer.filterId && Config.initLayerIds.length) {
 						//layer.display.visible = Config.initLayerIds.indexOf("" + layer.filterId) >= 0;
 					}
-					
+
 					if (layer.display.visible) {
 						me.addLayer(Config.layers[key]);
 						if (layer.containerElm) layer.containerElm.classList.remove("inactive");
@@ -148,25 +148,25 @@ var MapService = (function () {
 			if (layer.display.color) {
 
 
-                circleColor = layer.display.color;
+				circleColor = layer.display.color;
 
-                if (layer.display.color.data){
-                    var items = layer.display.color.data;
-                    if (typeof layer.display.color.data === "function") items = layer.display.color.data();
-                    items.forEach(function (item) {
-                        colorStops.push([item.value, item.color]);
-                    });
+				if (layer.display.color.data){
+					var items = layer.display.color.data;
+					if (typeof layer.display.color.data === "function") items = layer.display.color.data();
+					items.forEach(function (item) {
+						colorStops.push([item.value, item.color]);
+					});
 
-                    circleColor = {
-                        property: layer.display.color.property,
-                        type: 'categorical',
-                        stops: colorStops,
-                        default: layer.display.color.defaultColor || 'grey'
-                    }
-                }
-                
-                
-				
+					circleColor = {
+						property: layer.display.color.property,
+						type: 'categorical',
+						stops: colorStops,
+						default: layer.display.color.defaultColor || 'grey'
+					}
+				}
+
+
+
 			}
 
 			if (layer.display.size) {
@@ -578,11 +578,11 @@ var MapService = (function () {
 		return result;
 	};
 
-    me.addSubLayer = function(subLayer){
-        Config.subLayers = Config.subLayers || {};
-        Config.subLayers[subLayer.id] = subLayer;
-        if (subLayer.onClick) me.attachClickEvents(subLayer);
-    };
+	me.addSubLayer = function(subLayer){
+		Config.subLayers = Config.subLayers || {};
+		Config.subLayers[subLayer.id] = subLayer;
+		if (subLayer.onClick) me.attachClickEvents(subLayer);
+	};
 
 	me.getFilterItems = function (source, property, mapping) {
 		var filterList = me.distinct(source, property);
@@ -651,6 +651,10 @@ var MapService = (function () {
 			} else {
 				map.setFilter(layerId);
 			}
+		}
+
+		if (elm.layer.onFilter){
+			elm.layer.onFilter();
 		}
 	};
 
