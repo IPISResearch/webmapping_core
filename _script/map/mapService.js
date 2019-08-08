@@ -676,6 +676,15 @@ var MapService = (function () {
 			if (elm.array) {
 				elm.layer.filterFunctionLookup[elm.id] = function (item) {
 					var value = item.properties[elm.filterProperty];
+
+					// why do arrays get converted back to string in GeoJson structures?
+					if (typeof value === "string"){
+						try{
+							value = JSON.parse(value);
+						}catch (e) {
+							value = [];
+						}
+					}
 					if (value && value.length) {
 						return value.some(function (v) {
 							return values.includes(v);
