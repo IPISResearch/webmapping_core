@@ -11,6 +11,7 @@ var UI = function(){
 		menuContainer = menuContainer || document.getElementById("menu");
 		menuContainer.innerHTML = Template.get("menu");
 		menuContainer.className = "active";
+		window.document.title = "IPIS Map " + (Config.mapName || Config.mapId || "");
 
 		me.buildMenu();
 
