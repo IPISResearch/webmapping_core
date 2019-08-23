@@ -733,6 +733,10 @@ var MapService = (function () {
 		});
 
 		map.setFilter(elm.layer.id, ['in', 'id'].concat(filteredIds));
+
+		if (elm.layer.onFilter){
+			elm.layer.onFilter();
+		}
 	};
 
 
