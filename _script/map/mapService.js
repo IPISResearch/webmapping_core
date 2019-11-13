@@ -147,7 +147,6 @@ var MapService = (function () {
 
 			if (layer.display.color) {
 
-
 				circleColor = layer.display.color;
 
 				if (layer.display.color.data){
@@ -166,6 +165,15 @@ var MapService = (function () {
 				}
 
 
+				circleRadius = layer.display.radius || 1;
+				if (layer.display.size) {
+					circleRadius = {
+						'default': 3,
+						'property': layer.display.size.property,
+						'type': 'interval',
+						'stops': layer.display.size.interval
+					}
+				}
 
 			}
 
