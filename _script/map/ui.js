@@ -421,6 +421,15 @@ var UI = function(){
 
 	};
 
+	me.toggleSelect = function(){
+		UI.select = !UI.select;
+		var box = document.getElementById('selectbox');
+		if (box) box.classList.toggle("active",UI.select);
+		if (!UI.select && Config.onDeselect){
+			Config.onDeselect();
+		}
+	};
+
 	me.showDashboard = function(data,template){
 		var delay = 0;
 		if (!dashBoard){
