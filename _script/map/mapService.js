@@ -427,7 +427,7 @@ var MapService = (function () {
 						"source": "dummy"
 					}
 				],
-				"sprite": "http://ipis.annexmap.net/sprites/mapbox-v1" // note: relative urls are not supported - see https://github.com/mapbox/mapbox-gl-js/pull/7153
+				"sprite": "https://ipis.annexmap.net/sprites/mapbox-v1" // note: relative urls are not supported - see https://github.com/mapbox/mapbox-gl-js/pull/7153
 			};
 			if (attribution) {
 				style.sources["raster-source"].attribution = attribution
