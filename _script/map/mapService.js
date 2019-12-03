@@ -306,6 +306,7 @@ var MapService = (function () {
 						if (geo.coordinates) co = geo.coordinates;
 						if (geo.type == "Polygon") co = MapBoxExtra.polylabel(co);
 						if (geo.type == "MultiPolygon") co = MapBoxExtra.polylabel(co[0]);
+						if (geo.type == "LineString") co =  e.lngLat;
 					}
 
 					if (typeof layer.popupOnhover === "function") {
