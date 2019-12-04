@@ -185,11 +185,38 @@ var UI = function(){
 				item.checked = !item.checked;
 				if (item.checked){item.elm.classList.remove("inactive")}else{item.elm.classList.add("inactive")}
 			}
-
 		}
+
+		if (filter.filterElm){
+			checkedCount = 0;
+			filter.filterItems.forEach(function(e){
+				if (e.checked) checkedCount++;
+			});
+			if (checkedCount === filter.filterItems.length){
+				filter.filterElm.classList.remove("hasfilter");
+			}else{
+				filter.filterElm.classList.add("hasfilter");
+			}
+		}
+
 
 		if (filter.onFilter){
 			filter.onFilter(filter,item);
+		}
+
+	};
+
+	me.clearFilter = function(filter){
+
+		filter.filterItems.forEach(function(e){
+			e.checked = true;
+			e.elm.classList.remove("inactive");
+		});
+
+		filter.filterElm.classList.remove("hasfilter");
+
+		if (filter.onFilter){
+			filter.onFilter(filter);
 		}
 
 	};
@@ -213,6 +240,7 @@ var UI = function(){
 				layerdiv.item.active = true;
 				if (currentPopup) currentPopup.remove();
 				MapService.setStyle(layerdiv.dataset.url, layerdiv.dataset.attribution);
+				EventBus.trigger(EVENT.baseLayerChanged);
 			};
 			basecontainer.appendChild(layerdiv);
 		});
@@ -244,13 +272,21 @@ var UI = function(){
 					if (layer.filters) layer.filters.forEach(function(filter){
 						var filterContainer = div("filter");
 						var filterLabel  = div("filterlabel",filter.label);
+						var filterActiveIcon  = div("filteractive");
+						filterActiveIcon.title = "Clear filter";
 
+						filterActiveIcon.onclick = function(){
+							me.clearFilter(filter);
+						};
+
+						filterContainer.appendChild(filterActiveIcon);
 						filterContainer.appendChild(filterLabel);
 						var itemContainer = div("items");
 
 						var items = filter.items;
 						if (typeof items === "function") items = filter.items();
 						filter.layer = layer;
+						filter.filterElm = filterContainer;
 
 						var filterItems = [];
 						var max = filter.maxVisibleItems;
@@ -321,14 +357,25 @@ var UI = function(){
 		if (layer.filters) layer.filters.forEach(function(filter){
 
 			var filterContainer = div("filter");
+
+			var filterActiveIcon  = div("filteractive");
+			filterActiveIcon.title = "Clear filter";
+
+			filterActiveIcon.onclick = function(){
+				me.clearFilter(filter);
+			};
+
 			var filterLabel  = div("filterlabel appended",filter.label);
 
+
+			filterContainer.appendChild(filterActiveIcon);
 			filterContainer.appendChild(filterLabel);
 			var itemContainer = div("items");
 
 			var items = filter.items;
 			if (typeof items === "function") items = filter.items();
 			filter.layer = layer;
+			filter.filterElm = filterContainer;
 
 			var filterItems = [];
 			var max = filter.maxVisibleItems;
