@@ -741,6 +741,8 @@ var MapService = (function () {
 			}
 		});
 
+		// remember filtered ID's , we might need them to e.g. update charts based on the filtered state
+		elm.layer.filteredIds = filteredIds;
 		map.setFilter(elm.layer.id, ['in', 'id'].concat(filteredIds));
 
 		if (elm.layer.onFilter){
