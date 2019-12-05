@@ -725,7 +725,15 @@ var MapService = (function () {
 			}
 		}
 
-		map.querySourceFeatures(elm.layer.id).forEach(function (feature) {
+		var data = map.querySourceFeatures(elm.layer.id);
+		// this seems buggy sometimes ...
+
+		if (elm.layer.data && elm.layer.data.features){
+			data = elm.layer.data.features;
+
+		}
+
+		data.forEach(function (feature) {
 			var passed = true;
 			var filterCount = 0;
 			var filterMax = filterFunctions.length;
