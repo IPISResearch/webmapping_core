@@ -119,12 +119,20 @@ var MapService = (function () {
 
 		var source = mapSources[sourceId];
 		if (!source) {
+			if((typeof sourceOrigin === "string") ? sourceOrigin.indexOf("mapbox://") == 0 : 0) {
+				map.addSource(sourceId, {
+					type: 'vector',
+					url: sourceOrigin
+				});
+			} else {
 			map.addSource(sourceId, {
 				type: 'geojson',
 				data: sourceOrigin,
 				buffer: 0,
 				maxzoom: 12
 			});
+		}
+
 		}
 
 		var circleColor;
@@ -283,13 +291,16 @@ var MapService = (function () {
 			};
 		}
 
-		map.addLayer({
-			'id': layer.id,
-			'type': displayType,
-			'source': sourceId,
-			'paint': paint,
-			'layout': layout
-		}, layer.display.belowLayer);
+		var layerProperties = {
+			id: layer.id,
+			type: displayType,
+			source: sourceId,
+			paint: paint,
+			layout: layout
+		};
+		if(layer.sourceLayer) {layerProperties['source-layer'] = layer.sourceLayer}
+
+		map.addLayer(layerProperties, layer.display.belowLayer);
 
 		layer.added = true;
 
