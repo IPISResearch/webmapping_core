@@ -39,6 +39,9 @@ var MapService = (function () {
 		});
 
 		map.on('style.load', function (e) {
+
+			var layersWithInitialFilters = [];
+
 			for (var key in Config.layers) {
 
 
@@ -57,27 +60,25 @@ var MapService = (function () {
 						if (layer.containerElm) layer.containerElm.classList.remove("inactive");
 						if (layer.labelElm) layer.labelElm.classList.remove("inactive");
 
-						// check initial filter
+						if (layer.onLoaded) {
+							layer.onLoaded();
+						}
 						if (Config.initfilterIds.length && layer.filters) {
+							var hasState = false;
 							layer.filters.forEach(function (filter) {
 								var state = getFilterState(filter.index);
 								if (state && filter.filterItems && filter.filterItems.length) {
-									for (var i = 0, max = filter.filterItems.length; i < max; i++) {
-										// note: filter state contains a leading "1" to handle leading zeros
-										var item = filter.filterItems[i];
-										item.checked = state[i + 1] == "1";
-										if (item.elm) item.elm.classList.toggle("inactive", !item.checked);
-									}
-									if (filter.onFilter) filter.onFilter(filter);
+									// note: defer activating the filter until later 
+									// as this might affect other filters and charts
+									filter.initalState = state;
+									hasState = true;
 								}
 							});
+							if (hasState) layersWithInitialFilters.push(layer);
 
-						} else {
-							if (layer.onLoaded) {
-								layer.onLoaded();
-							}
+
+
 						}
-
 					} else {
 						if (layer.containerElm) layer.containerElm.classList.add("inactive");
 						if (layer.labelElm) layer.labelElm.classList.add("inactive");
@@ -97,6 +98,31 @@ var MapService = (function () {
 
 			EventBus.trigger(EVENT.mapStyleLoaded);
 
+
+			// http://localhost:63343/IPIS/webmap_drcongo/index.html#-0.3690418946077756/28.286472597127613/7.064464980581576/4/1/4.1z,4.4
+
+
+			// check initial filter
+			// note: this should only fire when everything is loaded, including charts etc ....
+			if (layersWithInitialFilters.length){
+				setTimeout(function(){
+					layersWithInitialFilters.forEach(function(layer){
+						layer.filters.forEach(function (filter) {
+							var state = filter.initalState;
+							if (state && filter.filterItems && filter.filterItems.length) {
+								for (var i = 0, max = filter.filterItems.length; i < max; i++) {
+									// note: filter state contains a leading "1" to handle leading zeros
+									var item = filter.filterItems[i];
+									item.checked = state[i + 1] == "1";
+									if (item.elm) item.elm.classList.toggle("inactive", !item.checked);
+								}
+								if (filter.onFilter) filter.onFilter(filter);
+							}
+						});
+					});
+				},1000)
+
+			}
 		});
 
 	};
@@ -125,13 +151,13 @@ var MapService = (function () {
 					url: sourceOrigin
 				});
 			} else {
-			map.addSource(sourceId, {
-				type: 'geojson',
-				data: sourceOrigin,
-				buffer: 0,
-				maxzoom: 12
-			});
-		}
+				map.addSource(sourceId, {
+					type: 'geojson',
+					data: sourceOrigin,
+					buffer: 0,
+					maxzoom: 12
+				});
+			}
 
 		}
 
