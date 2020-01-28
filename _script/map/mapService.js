@@ -549,7 +549,7 @@ var MapService = (function () {
 
 	function decodeHash(hash) {
 
-		Config.initLayerIds = ["1"];
+		Config.initLayerIds = [];
 		Config.initfilterIds = [];
 		Config.initBaselayer = Config.defaultBaseLayerIndex;
 
@@ -766,8 +766,7 @@ var MapService = (function () {
 				passed = filterFunctions[filterCount](feature);
 				filterCount++;
 			}
-
-
+			
 			if (passed) {
 				filtered.push(feature);
 				filteredIds.push(feature.properties.id);
