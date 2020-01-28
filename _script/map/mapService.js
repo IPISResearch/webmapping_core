@@ -49,7 +49,7 @@ var MapService = (function () {
 					if (typeof layer.display.visible === "undefined") layer.display.visible = true;
 
 					if (layer.filterId && Config.initLayerIds.length) {
-						//layer.display.visible = Config.initLayerIds.indexOf("" + layer.filterId) >= 0;
+						layer.display.visible = Config.initLayerIds.indexOf("" + layer.filterId) >= 0;
 					}
 
 					if (layer.display.visible) {
