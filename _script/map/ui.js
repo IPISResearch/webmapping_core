@@ -441,6 +441,17 @@ var UI = function(){
 			.setLngLat(point)
 			.setHTML(html)
 			.addTo(map);
+
+		// fix blurry popups on non-retina screens
+		var popup = currentPopup.getElement();
+		if (popup){
+			var w = Math.ceil(popup.clientWidth);
+			if (w%2==1) w++;
+			popup.style.width = w + "px";
+		}
+
+		console.error(currentPopup);
+		window.currentPopup = currentPopup;
 	};
 
 	me.activateDashboardTab = function(index,elm){
