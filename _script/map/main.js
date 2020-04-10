@@ -3,6 +3,13 @@ var Main = function(){
     var me = {};
 
     me.init = function(){
+
+    	var story = getUrlParameter("story");
+		if (story){
+			Config.useStory = story;
+		}
+
+
         Template.load(Config.templateURL+'?v' + version, function(templates) {
 
 			if (Config.usePass){

@@ -15,11 +15,14 @@ var MapService = (function () {
 		var hash = document.location.hash.substr(1);
 		decodeHash(hash);
 
+		var useStory = Config.useStory;
+
 		map = new mapboxgl.Map({
 			container: 'map',
 			style: Config.initStyle || 'mapbox://styles/ipisresearch/ciw6jpn5s002r2jtb615o6shz',
 			center: [Config.mapCoordinates.x, Config.mapCoordinates.y],
-			zoom: Config.mapCoordinates.zoom
+			zoom: Config.mapCoordinates.zoom,
+			scrollZoom: !useStory
 		});
 
 		map.on("zoomend", function () {
@@ -37,6 +40,17 @@ var MapService = (function () {
 			closeButton: false,
 			closeOnClick: false
 		});
+
+		if (useStory){
+			document.body.classList.add("storyfied");
+			map.on("load", function() {
+				Story.init();
+			});
+
+			Config.initLayerIds = [];
+			Config.initfilterIds = [];
+			Config.initBaselayer = Config.defaultBaseLayerIndex;
+		}
 
 		map.on('style.load', function (e) {
 
@@ -125,6 +139,43 @@ var MapService = (function () {
 			}
 		});
 
+	};
+
+
+	me.setMapState = function(layerIds,filterIds,baseLayerId){
+
+		if (layerIds && layerIds){
+			for (var key in Config.layers) {
+				if (Config.layers.hasOwnProperty(key)) {
+
+					var layer = Config.layers[key];
+					if (layer.filterId && layerIds.length) {
+						var visible = layerIds.indexOf("" + layer.filterId) >= 0;
+						if (visible){
+							UI.showLayer(layer);
+						}else{
+							UI.hideLayer(layer);
+						}
+					}
+					//console.error(Config.initLayerIds);
+				}
+			}
+		}
+
+		if (baseLayerId){
+			Config.baselayers.forEach(function (baseLayer) {
+				if (baseLayer.index == baseLayerId) {
+					if (!baseLayer.active){
+						console.error("Set baselayer to " + baseLayerId);
+						MapService.setStyle(baseLayer.url, baseLayer.attribution);
+						EventBus.trigger(EVENT.baseLayerChanged);
+					}
+					baseLayer.active = true;
+				}else{
+					baseLayer.active = false;
+				}
+			});
+		}
 	};
 
 	me.addLayer = function (layer) {
@@ -475,8 +526,10 @@ var MapService = (function () {
 
 	// updates the url Hash so links can reproduce the current map state
 	function updateHash(reason) {
-		console.log("update hash " + reason);
+		//console.log("update hash " + reason);
 		clearTimeout(updateHashTimeout);
+
+		if (Config.useStory) return;
 
 		updateHashTimeout = setTimeout(function () {
 			var zoom = map.getZoom();
@@ -559,19 +612,20 @@ var MapService = (function () {
 				Config.mapCoordinates.y = urlparams[0];
 				Config.mapCoordinates.x = urlparams[1];
 				Config.mapCoordinates.zoom = urlparams[2];
-				Config.initBaselayer = urlparams[3] || 2;
+				Config.initBaselayer = urlparams[3] || Config.defaultBaseLayerIndex;
 				if (urlparams[4]) Config.initLayerIds = (urlparams[4]).split(",");
 				if (urlparams[5]) Config.initfilterIds = (urlparams[5]).split(",");
 			}
 		}
 
-		Config.baselayers.forEach(function (baseLayer) {
-			if (Config.initBaselayer == baseLayer.index) {
-				Config.initStyle = me.urlToStyle(baseLayer.url, baseLayer.attribution);
-				baseLayer.active = true;
-			}
-		});
-
+		if (!Config.useStory || !initStyleLoaded){
+			Config.baselayers.forEach(function (baseLayer) {
+				if (Config.initBaselayer == baseLayer.index) {
+					Config.initStyle = me.urlToStyle(baseLayer.url, baseLayer.attribution);
+					baseLayer.active = true;
+				}
+			});
+		}
 	}
 
 	function getFilterState(index) {
@@ -690,6 +744,7 @@ var MapService = (function () {
 		if (elm.layer.onFilter){
 			elm.layer.onFilter();
 		}
+		EventBus.trigger(EVENT.filterChanged);
 	};
 
 
@@ -781,6 +836,8 @@ var MapService = (function () {
 			elm.layer.onFilter();
 		}
 	};
+
+	me.decodeHash = decodeHash;
 
 
 	return me;

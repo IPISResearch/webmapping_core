@@ -160,6 +160,60 @@ var UI = function(){
 
 	};
 
+	me.showLayer = function(layer){
+		var elm = layer.labelElm;
+		var container = layer.containerElm;
+		var wasVisible;
+
+		if (layer.added) {
+			wasVisible = map.getLayoutProperty(layer.id, 'visibility') !== "visible";
+			map.setLayoutProperty(layer.id, 'visibility','visible');
+		}else{
+			if (elm){
+				wasVisible = !elm.classList.contains("inactive");
+				if (currentLoader) removeLoader();
+				var loader = '<div class="lds-dual-ring"></div>';
+				var loaderContainer = elm.querySelector("i");
+				if (loaderContainer) loaderContainer.innerHTML = loader;
+				elm.classList.add("loading");
+				currentLoader = elm;
+			}
+
+			console.log("adding layer from story");
+			MapService.addLayer(layer);
+		}
+
+		if (elm) elm.classList.remove("inactive");
+		if (container) container.classList.remove("inactive");
+
+		if (!wasVisible){
+			console.log("Layer " + layer.id + " is toggled");
+			if (layer.onToggle) layer.onToggle(!wasVisible);
+			EventBus.trigger(EVENT.layerChanged);
+		}
+
+	};
+
+	me.hideLayer = function(layer){
+		var elm = layer.labelElm;
+		var container = layer.containerElm;
+		var wasVisible;
+
+		if (layer.added) {
+			wasVisible = map.getLayoutProperty(layer.id, 'visibility') !== "visible";
+			map.setLayoutProperty(layer.id, 'visibility','none');
+		}
+
+		if (elm) elm.classList.add("inactive");
+		if (container) container.classList.add("inactive");
+
+		if (wasVisible){
+			console.log("Layer " + layer.id + " is toggled");
+			if (layer.onToggle) layer.onToggle(!wasVisible);
+			EventBus.trigger(EVENT.layerChanged);
+		}
+	};
+
 	me.updateFilter = function(filter,item){
 
 		var checkedCount = 0;
