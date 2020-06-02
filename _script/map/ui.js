@@ -15,6 +15,12 @@ var UI = function(){
 
 		me.buildMenu();
 
+
+		var closeListPanel = document.getElementById("closeListPanel");
+		if (closeListPanel){
+			closeListPanel.onclick = UI.hideListPanel;
+		}
+
 		document.body.classList.remove("loading");
 
 		EventBus.trigger(EVENT.UIReady);
@@ -613,6 +619,143 @@ var UI = function(){
 		}
 	};
 
+
+	var listVisible = false;
+	var currentListItem;
+	me.showListPanel = function(item){
+
+		document.getElementById("datalist").classList.remove("hidden");
+		document.body.classList.add("listVisible");
+		listVisible = true;
+		EventBus.trigger(EVENT.UIResize);
+
+		var container = document.getElementById("dataListContainer");
+		var hasContent = container.querySelector(".entry");
+		if (!hasContent){
+			me.listLayer();
+		}
+
+
+		var element = document.getElementById("entry" + item.properties.id);
+		if(element) {
+			activateDashboardItem(element);
+			var scroller = document.getElementById("dataListScroll");
+			listSrollTo(scroller,element.offsetTop - 200,100);
+		}
+
+
+		EventBus.trigger(EVENT.UIResize);
+
+	};
+
+	me.hideListPanel = function(){
+		document.getElementById("datalist").classList.add("hidden");
+		document.body.classList.remove("listVisible");
+		listVisible = false;
+		EventBus.trigger(EVENT.UIResize);
+		//if (dashBoard){
+		//dashBoard.className = "";
+		//document.body.classList.remove("dashboard");
+		// }
+	};
+
+	var activateDashboardItem = function(item){
+		var container = document.getElementById("dataListContainer");
+		if (currentListItem) currentListItem.classList.remove("focused");
+		currentListItem = item;
+		item.classList.add("focused");
+		container.classList.add("focused");
+	};
+
+	function listSrollTo(element, to, duration) {
+		var start = element.scrollTop,
+			change = to - start,
+			currentTime = 0,
+			increment = 20;
+
+		var animateScroll = function(){
+			currentTime += increment;
+			element.scrollTop = Math.easeInOutQuad(currentTime, start, change, duration);
+			if(currentTime < duration) {
+				setTimeout(animateScroll, increment);
+			}
+		};
+		animateScroll();
+	}
+
+	me.listLayer = function(silent){
+
+		var container = document.getElementById("dataListContainer");
+		container.innerHTML = "";
+		//var layer = dataset[datasetId];
+		var markers = Data.getIncidents(true);
+		var table = document.createElement("div");
+		for (var i = 0, len = markers.length; i<len; i++){
+			var marker = markers[i];
+			var co = marker.geometry.coordinates;
+
+			var entry =  createListDataEntry(marker.properties);
+			entry.setAttribute("data-co", co[1] + "|" + (parseFloat(co[0]) + 0.1));
+
+			table.appendChild(entry);
+		}
+		container.appendChild(table);
+
+		if (!silent){
+			document.getElementById("datalist").classList.remove("hidden");
+			document.body.classList.add("listVisible");
+			listVisible = true;
+			EventBus.trigger(EVENT.UIResize);
+		}
+	};
+
+	function createListDataEntry(p){
+		var actor = p.actor1;
+		if (p.actor1Details) actor += " (" + p.actor1Details.trim() + ")";
+		if (p.actor2) actor += "<br>" + p.actor2;
+		if (p.actor2Details) actor += " (" + p.actor2Details.trim() + ")";
+		if (p.actor3) actor += "<br>" + p.actor3;
+		if (p.actor3Details) actor += " (" + p.actor3Details.trim() + ")";
+		if (p.actor4) actor += "<br>" + p.actor4;
+		if (p.actor4Details) actor += " (" + p.actor4Details.trim() + ")";
+
+		var tr = document.createElement("div");
+		tr.className = "entry";
+		tr.id = "entry" + p.id;
+		var td1 = document.createElement("div");
+		td1.className = "date";
+		td1.innerHTML = p.formattedDate;
+		var td2 = document.createElement("div");
+		td2.className = "actor";
+		td2.innerHTML = actor;
+		var td3 = document.createElement("div");
+		td3.className = "description";
+		td3.innerHTML = p.description;
+		tr.appendChild(td1);
+		tr.appendChild(td2);
+		tr.appendChild(td3);
+
+		var info = document.createElement("div");
+		info.className = "info";
+		info.innerHTML = "<b>Location:</b>" + p.location;
+		tr.appendChild(info);
+
+		tr.onclick=function(){
+			activateDashboardItem(this);
+			EventBus.trigger(EVENT.mapNavigate);
+
+			var co = this.dataset["co"];
+			var location = co.split('|');
+			console.log(location);
+			var point = [location[1],location[0]];
+			map.flyTo({center: point,zoom:11});
+		};
+
+		return tr;
+
+	}
+
+
 	me.togglePanel = function(elm){
 		if (elm && elm.dataset.target){
 			elm.classList.toggle("contracted");
@@ -635,6 +778,16 @@ var UI = function(){
 		currentLoader = false;
 	};
 
+	//t = current time
+	//b = start value
+	//c = change in value
+	//d = duration
+	Math.easeInOutQuad = function (t, b, c, d) {
+		t /= d/2;
+		if (t < 1) return c/2*t*t + b;
+		t--;
+		return -c/2 * (t*(t-2) - 1) + b;
+	};
 
 
 	return me;

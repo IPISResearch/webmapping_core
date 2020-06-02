@@ -4,7 +4,6 @@ var MapService = (function () {
 	var me = {};
 
 	var mapSources = {};
-	var mapLoaded;
 	var initStyleLoaded;
 	var updateHashTimeout;
 	var popupHover;
@@ -61,6 +60,7 @@ var MapService = (function () {
 
 				if (Config.layers.hasOwnProperty(key)) {
 					var layer = Config.layers[key];
+					layer.onLoadedTriggered = false;
 					layer.display = layer.display || {visible: true};
 
 					if (typeof layer.display.visible === "undefined") layer.display.visible = true;
@@ -74,9 +74,9 @@ var MapService = (function () {
 						if (layer.containerElm) layer.containerElm.classList.remove("inactive");
 						if (layer.labelElm) layer.labelElm.classList.remove("inactive");
 
-						if (layer.onLoaded) {
-							layer.onLoaded();
-						}
+						//if (layer.onLoaded) {
+							//layer.onLoaded();
+						//}
 						if (Config.initfilterIds.length && layer.filters) {
 							var hasState = false;
 							layer.filters.forEach(function (filter) {
@@ -318,6 +318,7 @@ var MapService = (function () {
 				'line-opacity': layer.display.lineOpacity || 0.7,
 				'line-width': layer.display.lineWidth || 1
 			};
+			if (layer.display.lineDashArray) paint["line-dasharray"] = layer.display.lineDashArray;
 
 			layout = {
 				'line-join': 'round',
@@ -418,15 +419,16 @@ var MapService = (function () {
 			});
 		}
 
-		if (layer.onLoaded) {
-			layer.onLoaded();
-		}
+		//if (layer.onLoaded) {
+		//	debugger;
+		//	layer.onLoaded();
+		//}
 
 		map.on("render", function () {
 			if (map.loaded()) {
-				if (!mapLoaded) {
-					mapLoaded = true;
-					if (layer.onLoaded) layer.onLoaded();
+				if (layer.onLoaded && !layer.onLoadedTriggered) {
+					layer.onLoadedTriggered = true;
+					layer.onLoaded();
 					updateHash("render");
 				}
 

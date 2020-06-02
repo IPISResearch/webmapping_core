@@ -17,9 +17,11 @@ var SearchService = (function() {
 
     var loadSearchData = function(){
         FetchService.json("https://ipis.annexmap.net/api/data/"+Config.apiScope+"/searchdata" + "?v" + version,function(result){
-            dataset = result.result.filter(function (el) {
-              return el.s != null;
-            });
+            if (result && result.result){
+                dataset = result.result.filter(function (el) {
+                  return el.s != null;
+                });
+            }
         });
 
     };

@@ -5,5 +5,6 @@ var EVENT = {
 	baseLayerChanged: 4,
 	yearFilterChanged: 5,
 	mapStyleLoaded:6,
-    UIReady: 7
+    UIReady: 7,
+	UIResize: 8
 };
