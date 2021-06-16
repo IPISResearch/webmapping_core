@@ -248,6 +248,18 @@ var MapService = (function () {
 						default: layer.display.color.defaultColor || 'grey'
 					}
 				}
+
+
+				circleRadius = layer.display.radius || 1;
+				if (layer.display.size) {
+					circleRadius = {
+						'default': 3,
+						'property': layer.display.size.property,
+						'type': 'interval',
+						'stops': layer.display.size.interval
+					}
+				}
+
 			}
 
 			if (layer.display.size) {
