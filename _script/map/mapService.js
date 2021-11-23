@@ -24,7 +24,7 @@ var MapService = (function () {
 			scrollZoom: !useStory
 		});
 
-		if (Config.preloadImages && Config.preLoadImages.length){
+		if (Config.preloadImages && Config.preloadImages.length){
 			Config.preloadImages.forEach(function(img){
 				map.loadImage(
 					'_img/' + img,
