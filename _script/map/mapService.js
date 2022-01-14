@@ -24,17 +24,6 @@ var MapService = (function () {
 			scrollZoom: !useStory
 		});
 
-		if (Config.preloadImages && Config.preloadImages.length){
-			Config.preloadImages.forEach(function(img){
-				map.loadImage(
-					'_img/' + img,
-					function (error, image) {
-						if (error) throw error;
-						map.addImage(img, image);
-					});
-			})
-		}
-
 		map.on("zoomend", function () {
 			updateHash("zoom ended");
 		});
@@ -63,6 +52,17 @@ var MapService = (function () {
 		}
 
 		map.on('style.load', function (e) {
+
+			if (Config.preloadImages && Config.preloadImages.length){
+				Config.preloadImages.forEach(function(img){
+					map.loadImage(
+						'_img/' + img,
+						function (error, image) {
+							if (error) throw error;
+							map.addImage(img, image);
+						});
+				})
+			}
 
 			var layersWithInitialFilters = [];
 
