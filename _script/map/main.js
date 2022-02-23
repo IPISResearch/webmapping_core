@@ -56,7 +56,9 @@ var Main = function(){
     };
 
     document.addEventListener('DOMContentLoaded', function() {
-        me.init();
+		if (!Config.deferred){
+			me.init();
+		}
     });
 
 	window.addEventListener('resize', function() {

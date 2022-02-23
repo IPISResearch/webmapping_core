@@ -24,6 +24,18 @@ var MapService = (function () {
 			scrollZoom: !useStory
 		});
 
+
+		/*if (Config.preloadImages && Config.preloadImages.length){
+			Config.preloadImages.forEach(function(img){
+				map.loadImage(
+					'_img/' + img,
+					function (error, image) {
+						if (error) throw error;
+						map.addImage(img, image);
+					});
+			})
+		}*/
+
 		map.on("zoomend", function () {
 			updateHash("zoom ended");
 		});
@@ -34,10 +46,16 @@ var MapService = (function () {
 
 		map.on("click", UI.hideDashboard);
 
+		map.on("styleimagemissing",function(a){
+
+
+		})
+
 		// Create a hover popup, but don't add it to the map yet.
 		popupHover = new mapboxgl.Popup({
 			closeButton: false,
-			closeOnClick: false
+			closeOnClick: false,
+			className: "hover"
 		});
 
 		if (useStory){
@@ -621,6 +639,12 @@ var MapService = (function () {
 			var hash = latitude + "/" + longitude + "/" + zoom + "/" + baseLayer + "/" + layerIds.join(",") + "/" + filterIds.join(",");
 			decodeHash(hash);
 			window.location.hash = hash;
+
+			if (reason === "move ended" || reason === "zoom ended"){
+				if (window.parent && window.parent.App){
+					window.parent.App.setMapProperties(latitude,longitude,zoom);
+				}
+			}
 		}, 50);
 
 	}
@@ -697,7 +721,7 @@ var MapService = (function () {
 		if (subLayer.onClick) me.attachClickEvents(subLayer);
 	};
 
-	me.getFilterItems = function (source, property, mapping) {
+	me.getFilterItems = function (source, property, mapping,defaultColor) {
 		var filterList = me.distinct(source, property);
 		filterList.sort();
 		var keyMapping = !!mapping;
@@ -711,6 +735,8 @@ var MapService = (function () {
 				if (mapping[item]) {
 					color = mapping[item].color || mapping[item];
 					label = mapping[item].label || label
+				}else{
+					color = defaultColor || "grey";
 				}
 			} else {
 				color = "#" + (mapping[index] || "CCCCCC");

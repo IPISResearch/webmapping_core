@@ -6,6 +6,8 @@ var UI = function(){
 	var dashBoard;
 	var currentDashBoardTab;
 	var currentLoader;
+	var infobox;
+	var currentInfoBox;
 
 	me.init = function(){
 		menuContainer = menuContainer || document.getElementById("menu");
@@ -14,7 +16,6 @@ var UI = function(){
 		window.document.title = "IPIS Map " + (Config.mapName || Config.mapId || "");
 
 		me.buildMenu();
-
 
 		var closeListPanel = document.getElementById("closeListPanel");
 		if (closeListPanel){
@@ -70,7 +71,7 @@ var UI = function(){
 
 	me.showDisclaimer = function(firstUse){
 
-		if (firstUse){
+		if (firstUse && !Config.showDisclaimerAlways){
 			var cookieName = Config.mapId + "_disclaimer";
 			var hasReadDisclaimer = readCookie(cookieName);
 			if (hasReadDisclaimer) return;
@@ -266,6 +267,52 @@ var UI = function(){
 
 	};
 
+	me.updateGroupFilter = function(filter,groupElm){
+
+		var selectedCount = 0;
+		var activeGroups = [];
+		filter.filterGroups.forEach(function(group){
+			if (!group.classList.contains("inactive")) selectedCount++;
+		});
+
+		if (selectedCount === filter.filterGroups.length){
+			// select only the selected group
+			filter.filterGroups.forEach(function(group){
+				group.classList.add("inactive");
+			});
+			groupElm.classList.remove("inactive");
+			activeGroups.push(groupElm.group);
+		}else{
+			groupElm.classList.toggle("inactive");
+			filter.filterGroups.forEach(function(group){
+				if (!group.classList.contains("inactive")) activeGroups.push(group.group);
+			});
+		}
+
+		if (activeGroups.length === 0){
+			me.clearFilter(filter);
+		}else{
+			var firstItem;
+			filter.filterItems.forEach(function(e){
+				if (activeGroups.indexOf(e.group)<0){
+					e.checked = false;
+					e.elm.classList.add("inactive");
+				}else{
+					e.checked = true;
+					e.elm.classList.remove("inactive");
+					firstItem = firstItem || e;
+				}
+			});
+
+			if (firstItem){
+				firstItem.checked=!firstItem.checked;
+				me.updateFilter(filter,firstItem);
+			}
+		}
+
+
+	};
+
 	me.clearFilter = function(filter){
 
 		filter.filterItems.forEach(function(e){
@@ -275,11 +322,35 @@ var UI = function(){
 
 		filter.filterElm.classList.remove("hasfilter");
 
+		if (filter.filterGroups){
+			filter.filterGroups.forEach(function(e){
+				e.classList.remove("inactive");
+			});
+		}
+
 		if (filter.onFilter){
 			filter.onFilter(filter);
 		}
 
 	};
+
+	me.updateFilterGroups = function(filter){
+		if (filter.filterGroups){
+			filter.filterGroups.forEach(function(group){
+				var isActive = false;
+				var items = group.querySelectorAll(".filteritem");
+				for (var i=0; i<items.length; i++){
+					var item = items[i];
+					if (!item.classList.contains("inactive")) isActive=true;
+				}
+				if (isActive){
+					group.classList.remove("inactive");
+				}else{
+					group.classList.add("inactive");
+				}
+			});
+		}
+	}
 
 	me.buildMenu = function(){
 		var container = document.getElementById("layers");
@@ -418,6 +489,7 @@ var UI = function(){
 
 			var filterContainer = div("filter");
 
+
 			var filterActiveIcon  = div("filteractive");
 			filterActiveIcon.title = "Clear filter";
 
@@ -427,10 +499,24 @@ var UI = function(){
 
 			var filterLabel  = div("filterlabel appended",filter.label);
 
+			if (filter.tooltip){
+				var tooltip =  document.createElement("i");
+				tooltip.className = "infodot";
+				tooltip.id =  filter.tooltip;
+				tooltip.onclick = function(){
+					UI.showInfobox(this);
+				}
+				filterLabel.appendChild(tooltip);
+			}
+
 
 			filterContainer.appendChild(filterActiveIcon);
 			filterContainer.appendChild(filterLabel);
 			var itemContainer = div("items");
+
+			if (filter.columns === 2){
+				itemContainer.classList.add("cols");
+			}
 
 			var items = filter.items;
 			if (typeof items === "function") items = filter.items();
@@ -438,45 +524,121 @@ var UI = function(){
 			filter.filterElm = filterContainer;
 
 			var filterItems = [];
+			var groups = [];
+			var filterItemsByGroup = {};
+			var subContainer;
 			var max = filter.maxVisibleItems;
 			var hasOverflow = false;
+
+			var itemGroup;
+			if (filter.groupBy){
+				var p = filter.groupBy;
+				if (filter.groupBySort) p = filter.groupBySort;
+				items.sort((a,b) => (a[p] > b[p]) ? 1 : ((b[p] > a[p]) ? -1 : 0));
+
+				console.error(items);
+
+				// add one to make sure all children gets attached to its parent in the foreach loop
+				items.push(undefined);
+			}
+
+
+
 			items.forEach(function(item,index){
 
-				var filterItem = item;
-				if (typeof item === "string" || typeof item === "number"){
-					filterItem = {label: item}
+				if (item){
+
+					var parentContainer = itemContainer;
+					var group;
+
+					if (filter.groupBy){
+						group = item[filter.groupBy];
+						if (group !== itemGroup){
+							itemGroup = group;
+							var groupElm = div("filteritemgroup group" + groups.length);
+							groupElm.group = group;
+							groupElm.index = groups.length;
+							var title =  div("filteritemgrouptitle");
+
+							var toggleIcon = document.createElement("i");
+							title.appendChild(toggleIcon);
+							if (filter.groupByIcon){
+								groupElm.classList.add(filter.id.toLowerCase() + groups.length);
+								title.classList.add("double");
+								title.innerHTML += "<b></b>";
+							}
+							title.innerHTML += group;
+
+							groups.push(groupElm);
+
+							subContainer =  div("sub");
+							if (filter.groupByIcon) subContainer.classList.add("double")
+							groupElm.appendChild(title);
+							groupElm.appendChild(subContainer);
+							itemContainer.appendChild(groupElm);
+							filterItemsByGroup[group] = [];
+
+							title.onclick = function(e){
+								if (e.target.tagName.toLowerCase() === "i"){
+									groupElm.classList.toggle("open");
+								}else{
+									groupElm.classList.add("open");
+									me.updateGroupFilter(filter,groupElm);
+								}
+
+
+							}
+						}
+						parentContainer = subContainer || itemContainer;
+					}
+
+					var filterItem = item;
+					if (typeof item === "string" || typeof item === "number"){
+						filterItem = {label: item}
+					}
+					filterItem.color = filterItem.color || "silver";
+					if (typeof filterItem.value === "undefined") filterItem.value = filterItem.label;
+					if (typeof filterItem.label === "undefined") filterItem.label = filterItem.value;
+					filterItem.group = group;
+					filterItem.groupElm = groupElm;
+
+					var icon = '<i style="background-color: '+filterItem.color+'"></i>';
+					var elm = div("filteritem",icon +  (filterItem.label || filterItem.value) );
+
+					elm.onclick = function(){
+						me.updateFilter(filter,filterItem);
+
+						if (filter.groupBy && filterItem.groupElm){
+							me.updateFilterGroups(filter);
+						}
+					};
+
+					if (max && index>=max){
+						elm.classList.add("overflow");
+						hasOverflow = true;
+					}
+
+					parentContainer.appendChild(elm);
+
+					filterItem.elm = elm;
+					filterItem.checked = true;
+					filterItems.push(filterItem);
+					if (group && filterItemsByGroup[group]) filterItemsByGroup[group].push(filterItem);
 				}
-				filterItem.color = filterItem.color || "silver";
-				if (typeof filterItem.value === "undefined") filterItem.value = filterItem.label;
-
-				var icon = '<i style="background-color: '+filterItem.color+'"></i>';
-				var elm = div("filteritem",icon +  (filterItem.label || filterItem.value) );
-
-				elm.onclick = function(){me.updateFilter(filter,filterItem)};
-
-				if (max && index>=max){
-					elm.classList.add("overflow");
-					hasOverflow = true;
-				}
-
-				itemContainer.appendChild(elm);
-
-				filterItem.elm = elm;
-				filterItem.checked = true;
-				filterItems.push(filterItem);
 			});
 			filter.filterItems = filterItems;
+			filter.filterGroups = groups;
 
 			if (hasOverflow){
-				var toggleMore = div("moreless","Plus ...");
+				var toggleMore = div("moreless","More ...");
 				toggleMore.onclick = function(){
 					if (itemContainer.classList.contains("expanded")){
 						itemContainer.classList.remove("expanded");
-						toggleMore.innerHTML = "Plus ...";
+						toggleMore.innerHTML = "More ...";
 						toggleMore.classList.remove("less");
 					}else{
 						itemContainer.classList.add("expanded");
-						toggleMore.innerHTML = "Moins ...";
+						toggleMore.innerHTML = "Less ...";
 						toggleMore.classList.add("less");
 					}
 				};
@@ -497,7 +659,7 @@ var UI = function(){
 		map.flyTo({center: point});
 
 		if (currentPopup) currentPopup.remove();
-		currentPopup = new mapboxgl.Popup()
+		currentPopup = new mapboxgl.Popup({className: "clicked"})
 			.setLngLat(point)
 			.setHTML(html)
 			.addTo(map);
@@ -510,7 +672,6 @@ var UI = function(){
 			popup.style.width = w + "px";
 		}
 
-		console.error(currentPopup);
 		window.currentPopup = currentPopup;
 	};
 
@@ -777,6 +938,52 @@ var UI = function(){
 		currentLoader.classList.remove("loading");
 		currentLoader = false;
 	};
+
+	me.showInfobox = function(elm){
+		var id = elm.id;
+		if (infobox){
+			var doShow = (id!==currentInfoBox);
+			me.hideInfobox();
+			if (doShow){
+				me.showInfobox(elm);
+			}
+		}else{
+			console.log(elm.id);
+			var text = Config.tooltips?Config.tooltips[id]:id;
+			if (text){
+				infobox = document.createElement("div");
+				infobox.className = "infobox";
+				if (text.length>300) {
+					infobox.className+= " large";
+				}
+				infobox.innerHTML = text;
+				var co = offset(elm);
+				infobox.style.top = co.top;
+				infobox.style.left = co.left + 20;
+
+				infobox.style.maxWidth = document.body.offsetWidth-(co.left + 20)-10;
+
+				infobox.onclick = me.hideInfobox;
+				document.body.appendChild(infobox);
+				currentInfoBox = id;
+			}
+		}
+	}
+
+	me.hideInfobox = function(){
+		if (infobox){
+			infobox.remove();
+			infobox = undefined;
+			currentInfoBox=undefined;
+		}
+	}
+
+	function offset(el) {
+		var rect = el.getBoundingClientRect(),
+			scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
+			scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+		return { top: rect.top + scrollTop, left: rect.left + scrollLeft }
+	}
 
 	//t = current time
 	//b = start value
