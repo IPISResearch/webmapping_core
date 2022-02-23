@@ -534,7 +534,7 @@ var UI = function(){
 			if (filter.groupBy){
 				var p = filter.groupBy;
 				if (filter.groupBySort) p = filter.groupBySort;
-				items.sort((a,b) => (a[p] > b[p]) ? 1 : ((b[p] > a[p]) ? -1 : 0));
+				items.sort(function(a,b){return (a[p] > b[p]) ? 1 : ((b[p] > a[p]) ? -1 : 0)});
 
 				console.error(items);
 
