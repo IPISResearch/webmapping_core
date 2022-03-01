@@ -398,6 +398,20 @@ var UI = function(){
 						}
 					}
 
+
+					if (layer.tooltip){
+						var tooltip =  document.createElement("b");
+						tooltip.className = "infodot";
+						tooltip.id =  "tooltip" + layer.id;
+						tooltip.value = layer.tooltip;
+						tooltip.onclick = function(e){
+							e.preventDefault();
+							e.stopPropagation();
+							UI.showInfobox(this,this.value,"left");
+						}
+						label.appendChild(tooltip);
+					}
+
 					layerContainer.appendChild(label);
 
 					if (layer.filters) layer.filters.forEach(function(filter){
@@ -405,6 +419,19 @@ var UI = function(){
 						var filterLabel  = div("filterlabel",filter.label);
 						var filterActiveIcon  = div("filteractive");
 						filterActiveIcon.title = "Clear filter";
+
+						if (filter.tooltip){
+							var tooltip =  document.createElement("b");
+							tooltip.className = "infodot";
+							tooltip.id =  "filtertooltip" + filter.id;
+							tooltip.value =  filter.tooltip;
+							tooltip.onclick = function(e){
+								e.preventDefault();
+								e.stopPropagation();
+								UI.showInfobox(this,tooltip.value,"left");
+							}
+							filterLabel.appendChild(tooltip);
+						}
 
 						filterActiveIcon.onclick = function(){
 							me.clearFilter(filter);
@@ -440,6 +467,19 @@ var UI = function(){
 							if (max && index>=max){
 								elm.classList.add("overflow");
 								hasOverflow = true;
+							}
+
+							if (item.tooltip){
+								var tooltip =  document.createElement("b");
+								tooltip.className = "infodot";
+								tooltip.id =  "filteritemtooltip" + filter.id + index;
+								tooltip.value =  item.tooltip;
+								tooltip.onclick = function(e){
+									e.preventDefault();
+									e.stopPropagation();
+									UI.showInfobox(this,tooltip.value,"left");
+								}
+								elm.appendChild(tooltip);
 							}
 
 							itemContainer.appendChild(elm);
@@ -536,7 +576,6 @@ var UI = function(){
 				if (filter.groupBySort) p = filter.groupBySort;
 				items.sort(function(a,b){return (a[p] > b[p]) ? 1 : ((b[p] > a[p]) ? -1 : 0)});
 
-				console.error(items);
 
 				// add one to make sure all children gets attached to its parent in the foreach loop
 				items.push(undefined);
@@ -939,8 +978,9 @@ var UI = function(){
 		currentLoader = false;
 	};
 
-	me.showInfobox = function(elm){
+	me.showInfobox = function(elm,text,position){
 		var id = elm.id;
+		position = position||"right";
 		if (infobox){
 			var doShow = (id!==currentInfoBox);
 			me.hideInfobox();
@@ -948,8 +988,7 @@ var UI = function(){
 				me.showInfobox(elm);
 			}
 		}else{
-			console.log(elm.id);
-			var text = Config.tooltips?Config.tooltips[id]:id;
+			text = text || id;
 			if (text){
 				infobox = document.createElement("div");
 				infobox.className = "infobox";
@@ -959,9 +998,17 @@ var UI = function(){
 				infobox.innerHTML = text;
 				var co = offset(elm);
 				infobox.style.top = co.top;
-				infobox.style.left = co.left + 20;
 
-				infobox.style.maxWidth = document.body.offsetWidth-(co.left + 20)-10;
+				if (position === "right"){
+					infobox.style.left = co.left + 20;
+					infobox.style.maxWidth = document.body.offsetWidth-(co.left + 20)-10;
+				}
+
+				if (position === "left"){
+					infobox.style.top = co.top-10;
+					infobox.style.right = "255px";
+					infobox.style.maxWidth = "250px";
+				}
 
 				infobox.onclick = me.hideInfobox;
 				document.body.appendChild(infobox);
