@@ -9,6 +9,17 @@ var UI = function(){
 	var infobox;
 	var currentInfoBox;
 
+	var languages ={
+		en:{
+			more: "More",
+			less: "Less",
+		},
+		fr:{
+			more: "Plus",
+			less: "Moins",
+		}
+	}
+
 	me.init = function(){
 		menuContainer = menuContainer || document.getElementById("menu");
 		menuContainer.innerHTML = Template.get("menu");
@@ -407,7 +418,7 @@ var UI = function(){
 						tooltip.onclick = function(e){
 							e.preventDefault();
 							e.stopPropagation();
-							UI.showInfobox(this,this.value,"left");
+							UI.showInfobox(this,getTooltipContent(this.value),"left",layer.tooltipsize);
 						}
 						label.appendChild(tooltip);
 					}
@@ -428,7 +439,7 @@ var UI = function(){
 							tooltip.onclick = function(e){
 								e.preventDefault();
 								e.stopPropagation();
-								UI.showInfobox(this,tooltip.value,"left");
+								UI.showInfobox(this,getTooltipContent(tooltip.value),"left",filter.tooltipsize);
 							}
 							filterLabel.appendChild(tooltip);
 						}
@@ -477,7 +488,7 @@ var UI = function(){
 								tooltip.onclick = function(e){
 									e.preventDefault();
 									e.stopPropagation();
-									UI.showInfobox(this,tooltip.value,"left");
+									UI.showInfobox(this,getTooltipContent(tooltip.value),"left",item.tooltipsize);
 								}
 								elm.appendChild(tooltip);
 							}
@@ -491,15 +502,15 @@ var UI = function(){
 						filter.filterItems = filterItems;
 
 						if (hasOverflow){
-							var toggleMore = div("moreless","More ...");
+							var toggleMore = div("moreless",getTranslation("more") + " ...");
 							toggleMore.onclick = function(){
 								if (itemContainer.classList.contains("expanded")){
 									itemContainer.classList.remove("expanded");
-									toggleMore.innerHTML = "More ...";
+									toggleMore.innerHTML = getTranslation("more") + " ...";
 									toggleMore.classList.remove("less");
 								}else{
 									itemContainer.classList.add("expanded");
-									toggleMore.innerHTML = "Less ...";
+									toggleMore.innerHTML = getTranslation("less") + " ...";
 									toggleMore.classList.add("less");
 								}
 							};
@@ -669,15 +680,15 @@ var UI = function(){
 			filter.filterGroups = groups;
 
 			if (hasOverflow){
-				var toggleMore = div("moreless","More ...");
+				var toggleMore = div("moreless",getTranslation("more") + " ...");
 				toggleMore.onclick = function(){
 					if (itemContainer.classList.contains("expanded")){
 						itemContainer.classList.remove("expanded");
-						toggleMore.innerHTML = "More ...";
+						toggleMore.innerHTML = getTranslation("more") + " ...";
 						toggleMore.classList.remove("less");
 					}else{
 						itemContainer.classList.add("expanded");
-						toggleMore.innerHTML = "Less ...";
+						toggleMore.innerHTML = getTranslation("less") +  " ...";
 						toggleMore.classList.add("less");
 					}
 				};
@@ -846,6 +857,16 @@ var UI = function(){
 			document.body.classList.remove("dashboard");
 		}
 	};
+
+	function getTooltipContent(tooltip){
+		var result = tooltip;
+
+		if (tooltip && tooltip.indexOf("template.") === 0){
+			let template = tooltip.substr(9);
+			result = Template.get(template);
+		}
+		return result;
+	}
 
 	function slideOutLeft(image){
 		image.classList.add("disappearleft");
@@ -1079,14 +1100,14 @@ var UI = function(){
 		currentLoader = false;
 	};
 
-	me.showInfobox = function(elm,text,position){
+	me.showInfobox = function(elm,text,position,size){
 		var id = elm.id;
 		position = position||"right";
 		if (infobox){
 			var doShow = (id!==currentInfoBox);
 			me.hideInfobox();
 			if (doShow){
-				me.showInfobox(elm);
+				me.showInfobox(elm,text,position,size);
 			}
 		}else{
 			text = text || id;
@@ -1108,12 +1129,24 @@ var UI = function(){
 				if (position === "left"){
 					infobox.style.top = co.top-10;
 					infobox.style.right = "255px";
-					infobox.style.maxWidth = "250px";
+
+					if (size){
+						infobox.style.width = size + "px";
+						infobox.style.maxWidth = size + "px";
+					}else{
+						infobox.style.maxWidth = "250px";
+					}
+
+					infobox.classList.add("left");
+					setTimeout(function(){
+						infobox.classList.add("active");
+					},10)
 				}
 
 				infobox.onclick = me.hideInfobox;
 				document.body.appendChild(infobox);
 				currentInfoBox = id;
+
 			}
 		}
 	}
@@ -1143,6 +1176,15 @@ var UI = function(){
 		t--;
 		return -c/2 * (t*(t-2) - 1) + b;
 	};
+
+
+
+	function getTranslation(s){
+		var translations;
+		if (Config && Config.language) translations = languages[Config.language];
+		if (!translations) translations = languages.en;
+		return translations[s] || s;
+	}
 
 
 	return me;
