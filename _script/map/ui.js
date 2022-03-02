@@ -862,7 +862,7 @@ var UI = function(){
 		var result = tooltip;
 
 		if (tooltip && tooltip.indexOf("template.") === 0){
-			let template = tooltip.substr(9);
+			var template = tooltip.substr(9);
 			result = Template.get(template);
 		}
 		return result;
