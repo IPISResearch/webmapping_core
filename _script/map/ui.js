@@ -1159,6 +1159,17 @@ var UI = function(){
 		}
 	}
 
+	me.resetMap = function(){
+
+		map.flyTo({
+			center: [Config.initialMapCoordinates.x, Config.initialMapCoordinates.y],
+			zoom: Config.initialMapCoordinates.zoom,
+			pitch: 0,
+			bearing: 0,
+			essential: true // this animation is considered essential with respect to prefers-reduced-motion
+		});
+	}
+
 	function offset(el) {
 		var rect = el.getBoundingClientRect(),
 			scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
